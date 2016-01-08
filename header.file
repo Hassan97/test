@@ -1,0 +1,362 @@
+#include <iostream>
+#include <string>
+#include <windows.h>
+#include "libxl.h"
+#include<conio.h>
+//////////////////////////////////////////////////
+using namespace libxl;
+using namespace std;
+//////////////////////////////////////////////////
+struct node
+{
+	string word;
+	string description;
+	node *next;
+	node(node *n = NULL)
+	{
+		word = "\0";
+		description = "\0";
+		next = n;
+	}
+};
+	static int u_count = 0;
+	static int admin_count = 0;
+	static int admin_write = 0;
+node Hasharray[101];
+
+///////////////////////////////////////////////////
+class Dictionary
+{
+private:
+	int size;
+	Book* book;
+	Sheet* sheet;
+	static int row;
+	static int column;
+	/////////////////////////////////////////////////
+	node next(node a)
+	{
+		if (a.next == NULL)
+		{
+			a.word = "\0";
+			a.description = "\0";
+			a.next = NULL;
+		}
+		else
+		{
+			a.word = a.next->word;
+			a.description = a.next->description;
+			a.next = a.next->next;
+		}
+		return a;
+	}
+	/////////////////////////////////////////////////////
+	bool checkblank(node n)
+	{
+		if (n.word == "\0")
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	/////////////////////////////////////////////////////
+	bool checkpresence(node n1, string s1)
+	{
+		if (n1.word == s1){ return true; }
+		else
+		{
+			return false;
+		}
+	}
+	///////////////////////////////////////////////////
+	node* getting_values(string s1, int index, string discription)
+	{
+
+		node *new_node = new node;
+		new_node->word = s1;
+		new_node->description = discription;
+		return new_node;
+	}
+	//////////////////////////////////////////////////////
+	void search()
+	{
+		string s1;
+		cout << "\nenter a word(case sensitive):\n";
+		cin.ignore();
+		getline(cin, s1);
+		int index = HashKey(s1);
+		display(Hasharray[index], index, s1);
+	}
+	////////////////////////////////////////////
+	int HashKey(string key)
+	{
+		int value = 0;
+		for (int i = 0; i < (key.length()); i++)
+		{
+			value = +key[i];
+		}
+		return value%size;
+	}
+	//////////////////////////////////////////////
+	void insert(string key, string dis)
+	{
+		int index = HashKey(key);
+		if (checkblank(Hasharray[index]))
+		{
+			Hasharray[index] = *getting_values(key, index, dis);
+		}
+		else if (Hasharray[index].word == key)
+		{
+			cout << "\nalready exist\n";
+		}
+		else
+		{
+			node *temp = Hasharray[index].next;
+			if (temp == NULL){ Hasharray[index].next = getting_values(key, index, dis); }
+			else
+			{
+				while (temp->next != NULL)
+				{
+					if (checkpresence(*temp, key)){ cout << "\nalrady found\n"; break; }
+					else
+					{
+						temp = temp->next;
+					}
+				}
+				temp->next = getting_values(key, index, dis);
+			}
+		}
+	}
+	////////////////////////////////////////////////////
+	void display(node new1, int index, string g)
+	{
+		if ((new1.word != g) && (new1.next != NULL))
+		{
+			node *temp = new1.next;
+			while ((temp != NULL))
+			{
+				if (temp->word == g)
+				{
+					cout << "\nword:\n" << temp->word << endl;
+					cout << "\ndescription:\n" << temp->description << endl;
+					_getch();
+				}
+				temp = temp->next;
+			}
+			if (temp == NULL){ cout << "\nNOT FOUND\n"; _getche(); }
+		}
+		else if ((new1.word != g) && (new1.next == NULL))
+		{
+			cout << "\nNOT FOUND\n";
+			_getche();
+		}
+		else
+		{
+			cout << "\nword:\n" << new1.word << endl;
+			cout << "\ndescription:\n" << new1.description << endl;
+			_getch();
+		}
+	}
+	///////////////////////////////////////////////////////////////
+	void adder()
+	{
+		string s = " ", s2 = " ";
+		cout << "enter a word" << endl;
+		cin.ignore();
+		getline(cin, s);
+		cout << "enter a discription" << endl;
+		getline(cin, s2);
+		insert(s, s2);
+	}
+	//////////////////////////////////////////////////////////
+public:
+	Dictionary()
+	{
+		size = 101;
+		book = xlCreateBook();
+	}
+	/////////////////////////////////////////////////
+	void SAVING_PROGRESS()
+	{
+		string word, discription;
+		if (book)
+		{
+			sheet = book->addSheet(L"Sheet1");
+			row = 2;
+			if (sheet)
+			{
+				for (int j = 0; j < 101; j++)
+				{
+					node temp = Hasharray[j];
+					node temp2 = Hasharray[j];
+					while (temp.word != "\0")
+					{
+						wstring wideusername;
+						for (int i = 0; i < temp.word.length(); ++i)
+						{
+							wideusername += wchar_t(temp.word[i]);
+						}
+						const wchar_t* your_result = wideusername.c_str();
+						wstring wideusername2;
+						for (int i = 0; i < temp.description.length(); ++i)
+						{
+							wideusername2 += wchar_t(temp.description[i]);
+						}
+						const wchar_t* your_result2 = wideusername2.c_str();
+						sheet->writeStr(row, column + 5, your_result2);
+						sheet->writeStr(row, column, your_result);
+						row++;
+						temp = next(temp);
+					}
+				}
+			}
+			if (book->save(L"Dictionary.xls"))
+			{
+				::ShellExecute(NULL, L"open", L"Dictionary.xls", NULL, NULL, SW_SHOW);
+			}
+			else
+			{
+				std::cout << book->errorMessage() << std::endl;
+			}
+			book->release();
+		}
+	}
+	/////////////////////////////////////////////////
+	void DICTIONARY_LOADER()
+	{
+		Book* book = xlCreateBook();
+		if (book)
+		{
+			row = 2;
+			if (book->load(L"Dictionary.xls"))
+			{
+				Sheet* sheet = book->getSheet(0);
+				while (row < sheet->lastRow())
+				{
+					if (sheet)
+					{
+						const wchar_t* s = sheet->readStr(row, column);
+						wstring ws(s);
+						string st(ws.begin(), ws.end());
+						const wchar_t* s1 = sheet->readStr(row, column + 5);
+						wstring ws1(s1);
+						string st1(ws1.begin(), ws1.end());
+						insert(st, st1);
+						row++;
+					}
+				}
+			}
+			else
+			{
+				std::cout << "At first run generate !" << std::endl;
+			}
+
+			book->release();
+		}
+	}
+	/////////////////////////////////////////////////
+	void user()
+	{
+		int cho = -1;
+		system("cls");
+		cout << "***ENTER (0) to search through DICTIONARY :" << endl;
+		cout << "***ENTER (anyother other number) for exit:" << endl;
+		cout << "ENTER CHOICE:" << endl;
+		cin >> cho;
+		switch (cho)
+		{
+		case 0:
+			system("cls");
+			u_count++;
+			cout << u_count;
+			search();
+			user();
+			break;
+		default:
+			break;
+		}
+	}
+	//////////////////////////////////////////////////////////
+	
+	//////////////////////////////////////////////////////////
+	void administor()
+	{
+		int cho = -1;
+		system("cls");
+		cout << "***ENTER (0) to search through DICTIONARY :" << endl;
+		cout << "***ENTER (1) to edit DICTIONARY :" << endl;
+		cout << "***ENTER (anyother other number) for exit:" << endl;
+		cout << "ENTER CHOICE:" << endl;
+		cin >> cho;
+		switch (cho)
+		{
+		case 0:
+			system("cls");
+			admin_count=admin_count + 1;
+			cout << admin_count;
+			search();
+			administor();
+			break;
+		case 1:
+			system("cls");
+			admin_write++;
+			adder();
+			administor();
+			break;
+		default:
+			break;
+		}
+	}
+	/////////////////////////////////////////////////////////////
+	int get_u_count()
+	{
+		return u_count;
+	}
+	int get_admin_count()
+	{
+		return admin_count;
+	}
+	int get_admin_write()
+	{
+		return admin_write;
+	}
+	friend class admin;
+	friend class User;
+	~ Dictionary()
+	{
+
+	}
+};
+int Dictionary::row = 0;
+int Dictionary::column = 0;
+/////////////////////////////////////////////////////////////////////////
+class admin
+{
+public:
+	void adadministor1 ()
+	{
+		Dictionary s1;
+		s1.administor();
+	}
+	~admin()
+	{
+
+	}
+};
+//////////////////////////////////////////////////////////////////////////////
+class User
+{
+public:
+	void USER()
+	{
+		Dictionary s1;
+		s1.user();
+	}
+	~User ()
+	{
+
+	}
+};
