@@ -1,0 +1,114 @@
+#include <iostream>
+#include<stdlib.h>
+#include "Header.h"
+using namespace std;
+void set()
+{
+	u_count = 0;
+	admin_count = 0;
+	admin_write = 0;
+}
+struct teams
+{
+	admin member1_admin;
+	User  member2_user;
+	User  member3_user;
+	admin member4_admin;
+	User  member5_user;
+};
+struct statics
+{
+	int team_no;
+	int user_searches;
+	int admin_searches;
+	int admin_edits;
+	statics()
+	{
+		team_no=0;
+		user_searches=0;
+		admin_searches=0;
+		admin_edits=0;
+	}
+};
+void display(int t, statics s)
+{
+		cout << "\nTEAM " << t << " statics" << endl;
+		cout << "searches done by user type members of team " << t << " is = " <<s.user_searches << endl;
+		cout << "searches done by admin type members of team " << t << " is = " <<s.admin_searches  << endl;
+		cout << "words edited by admin type members  " << t << " is = " << s.admin_edits << endl;
+		cout << "total searches = " << s.user_searches + s.admin_searches;
+}
+int main()
+{
+	int number_of_teams = 2;
+	int size = 0;
+	statics *data = new statics[size];
+	cout << "enter number of teams" << endl;
+	cin >> number_of_teams;
+	teams *team = new teams[number_of_teams];
+	size = number_of_teams;
+	Dictionary s1;
+	bool loop = true;
+	int a = -1;
+	s1.DICTIONARY_LOADER();
+	cout << "################################################################################";
+	cout << "################################################################################";
+	cout << "##########################HELLO FROM DICTIONARY#################################";
+	cout << "################################################################################";
+	cout << "enter any key to continue....................";
+	_getche();
+	for (int i = 1; i < (number_of_teams+1); i++)
+	{
+		set();
+		loop = true;
+		while (loop)
+		{
+			a = 12;
+			system("cls");
+			cout << "\nTEAM " << i << endl;
+			cout << "****enter (0) for member2_user:" << endl;
+			cout << "****enter (1) for member1_admin:" << endl;
+			cout << "****enter (2) for member2_user:" << endl;
+			cout << "****enter (3) for member1_admin:" << endl;
+			cout << "****enter (4) for member2_user:" << endl;
+			cout << "****enter (anyelse key) to EXIT:" << endl;
+			cin >> a;
+			switch (a)
+			{
+			case 0:
+				system("cls");
+				team[i].member2_user.USER();
+				break;
+			case 1:
+				system("cls");
+				team[i].member1_admin.adadministor1();
+				break;
+			case 2:
+				system("cls");
+				team[i].member3_user.USER();
+				break;
+			case 3:
+				system("cls");
+				team[i].member4_admin.adadministor1();
+				break;
+			case 4:
+				system("cls");
+				team[i].member5_user .USER();
+				break;
+			default:
+				loop = false;
+			}
+			data[i-1].team_no = i;
+			data[i - 1].user_searches = s1.get_u_count();
+			data[i - 1].admin_searches = s1.get_admin_count();
+			data[i - 1].admin_edits = s1.get_admin_write();
+		}
+	}
+	for (int i = 1; i < (number_of_teams + 1); i++)
+	{
+		display(i, data[i - 1]);
+	}
+	s1.SAVING_PROGRESS();
+	system("PAUSE");
+	return 0;
+}
